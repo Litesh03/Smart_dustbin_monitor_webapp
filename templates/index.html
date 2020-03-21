@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <title>mqtt-demo: A simple web application that can subscribe to topics from an MQTT broker over websockets</title>
+      <link rel="stylesheet" href="style.css">
+	  <link rel="{{shortcut_icon}}" alt="shortcut_icon">
+	  
+	  
+	  <style>
+	  input {
+    width : 150px;
+    margin: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+input[type=text] {
+    width: 30%;
+    padding: 12px 20px;
+    margin: 8px 0;
+}
+input[type=button] {
+    background-color: gray;
+    border: none;
+    color: black;
+    padding: 16px 32px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+input[type=text]:focus {
+    background-color: lightblue;
+}
+input[type=button]:hover {
+    background-color: #686868;
+}
+
+
+#messages {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    width:98%;
+    display: inline-block;
+    border:1px solid black;
+    max-height: 100px;
+    min-height: 100px;
+    overflow: scroll;
+}
+#messages span {
+    overflow-y: scroll;
+    overflow: scroll;
+
+}
+/* Set the size of the div element that contains the map */
+      #map {
+        height: 400px;  /* The height is 400 pixels */
+        width: 98%;  /* The width is the width of the web page */
+		padding: 1%;
+       }
+
+#bavdhan_data
+{
+	//position: relative;
+    //height: 25px;
+    //width: 25px;
+	font-weight: bold;
+	color: red;
+
+}
+
+
+#kothrud_data
+{
+	//position: relative;
+    //height: 25px;
+    //width: 25px;
+	font-weight: bold;
+	color: red;
+
+}
+
+
+#karvenagar_data
+{
+	//position: relative;
+    //height: 25px;
+    //width: 25px;
+	font-weight: bold;
+	color: red;
+
+}
+
+.contentheader {
+	background:	#000000 url(../images/rausch.png) repeat;
+	margin-top:0px;
+	border-bottom:1px solid #1d1b18;
+}
+.logo {
+	padding-top:2px;
+}
+
+body {
+	font: 12px Arial, Helvetica, sans-serif;
+	line-height: 20px;
+	color:#261b0d;
+	-webkit-font-smoothing: antialiased; /* Fix for webkit rendering */
+	-webkit-text-size-adjust: 100%;
+	overflow-x: hidden;
+}
+html {
+	background:#fdf2e4 url(../images/rausch.png) repeat;
+/*overflow-x: hidden;*/ }
+/* #Typography
+================================================== */
+h1, h2 {
+	color: #261b0d;
+	font-family:'Oswald', serif;
+	font-weight: normal;
+	text-transform:uppercase;
+}
+h1 a, h2 a, h3 a{
+	font-weight: inherit;
+	color: #f07272;
+}
+h1 {
+	font-size: 48px;
+	margin-bottom: 20px;
+	line-height:50px;
+}
+h2 {
+	font-size: 30px;
+	margin-bottom:10px;
+}
+h3 {
+	font-size: 20px;
+	margin-bottom: 10px;
+	color: #543d1f;
+}
+
+
+
+
+
+.titlepart {
+	float:right;
+	margin-top:20px;
+	font-weight:bold;
+}
+
+	  </style>
+	 
+
+
+	  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js" type="text/javascript"></script>
+   <script src="../static/vendors/jquery/dist/jquery.min.js"></script>
+  <script>
+  // Called after form input is processed
+function startConnect() {
+    // Generate a random client ID
+    clientID = "clientID-" + parseInt(Math.random() * 100);
+
+    // Fetch the hostname/IP address and port number from the form
+    host = document.getElementById("host").value;
+    port = document.getElementById("port").value;
+
+    // Print output for the user in the messages div
+    document.getElementById("messages").innerHTML += '<span>Connecting to: ' + host + ' on port: ' + port + '</span><br/>';
+    document.getElementById("messages").innerHTML += '<span>Using the following client value: ' + clientID + '</span><br/>';
+
+    // Initialize new Paho client connection
+    client = new Paho.MQTT.Client(host, Number(port), clientID);
+
+    // Set callback handlers
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+
+   
+    // Connect the client, if successful, call onConnect function
+    client.connect({ 
+        onSuccess: onConnect,
+    });
+}
+
+// Called when the client connects
+function onConnect() {
+    // Fetch the MQTT topic from the form
+    topic = document.getElementById("topic").value;
+
+    // Print output for the user in the messages div
+	
+    document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + topic + '</span><br/>';
+	
+
+    // Subscribe to the requested topic
+    client.subscribe(topic);
+	alert("Successfully Subscribed to"+ " " + topic);
+}
+
+// Called when the client loses its connection
+function onConnectionLost(responseObject) {
+    document.getElementById("messages").innerHTML += '<span>ERROR: Connection lost</span><br/>';
+    if (responseObject.errorCode !== 0) {
+        document.getElementById("messages").innerHTML += '<span>ERROR: ' + + responseObject.errorMessage + '</span><br/>';
+
+    }
+}
+
+var toStore;
+// Called when a message arrives
+function onMessageArrived(message) {
+    console.log("onMessageArrived: " + message.payloadString);
+    document.getElementById("messages").innerHTML += '<span>Topic: ' + message.destinationName + '  | ' + message.payloadString + '</span><br/>';
+	
+	var parsed_text = JSON.parse(message.payloadString);
+	toStore = parsed_text;
+    
+	
+    if(parsed_text.dest == 'bavdhan'){
+      document.getElementById("bavdhan_data").innerHTML = '<span>' + parsed_text.per  + '</span><br/>'; 
+        if(parsed_text.per>=85)
+			alert("The garbage in the Dustbin at Bavdhan is above 85%");
+	}
+     if(parsed_text.dest == 'kothrud')
+      document.getElementById("kothrud_data").innerHTML = '<span>' + parsed_text.per  + '</span><br/>';
+
+     if(parsed_text.dest == 'karvenagar'){
+      document.getElementById("karvenagar_data").innerHTML = '<span>' + parsed_text.per  + '</span><br/>';
+	    if(parsed_text.per>=85)
+			alert("The garbage in the Dustbin at Karvenagar is above 85%");
+	 }
+	 storeData(toStore);
+}
+
+// Called when the disconnection button is pressed
+function startDisconnect() {
+    client.disconnect();
+    document.getElementById("messages").innerHTML += '<span>Disconnected</span><br/>';
+}
+
+function storeData(data) {
+    console.log("INSIDE STORE");
+    var sendData = JSON.stringify(data);
+    $.ajax({
+        url: '/api/v1/storeData',
+        type: "POST",
+        contentType: "application/json",
+        dataType: 'json',
+        data: sendData,
+        //encode: true    
+		}).done(function(ack) {
+        console.log(ack);
+        event.preventDefault(); });}
+
+  </script>
+    
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=APIKEY&callback=initMap" type="text/javascript"></script>
+  <script>  
+  function initMap() {
+  
+// The location of Pune
+  var pune = {lat: 18.5204, lng:73.8567 };
+  var bavdhan = {lat: 18.5156, lng: 73.7819};
+  var karvenagar = {lat: 18.4898, lng: 73.8203};
+  var kothrud = {lat: 18.5074, lng: 73.8077};
+  
+
+//The map, centered at Pune
+  var map = new google.maps.Map(document.getElementById('map'), {zoom: 6, center: pune});
+
+//Icon
+ 
+//The marker, positioned at Pune_Places
+  var marker_bdn = new google.maps.Marker({position: bavdhan, map: map , title: 'Click to see Level'});
+  var marker_kn = new google.maps.Marker({position: karvenagar,map: map , title: 'Click to see Level'});
+  var marker_ktd = new google.maps.Marker({position: kothrud,map: map , title: 'Click to see Level'});  
+
+
+//Info Window code
+  var infowindow_bdn = new google.maps.InfoWindow({content: bavdhan_data});
+  var infowindow_kn = new google.maps.InfoWindow({content: karvenagar_data});
+  var infowindow_ktd = new google.maps.InfoWindow({content: kothrud_data});
+
+
+//Pop Up Code
+  google.maps.event.addListener(marker_bdn, 'click' , function() {infowindow_bdn.open(map,marker_bdn); });
+  google.maps.event.addListener(marker_kn, 'click' , function() {infowindow_kn.open(map,marker_kn); });
+  google.maps.event.addListener(marker_ktd, 'click' , function() {infowindow_ktd.open(map,marker_ktd); });
+
+  }
+  </script>
+
+   </head>
+   <body>
+ 
+	 <div class="contentheader">
+  <div class="container"> 
+    <!-- Header | Logo, Menu
+		================================================== -->
+    <div class="one_third">
+      <div class="logo"><a href="index.html"><img src="smart1.png" alt="" /></a></div>
+    </div>
+    <div class="two_third lastcolumn">
+      <section class="titlepart">
+        <ul>
+           <li>By: <a> Group No.7 </a>
+        </ul>
+      </section>
+    </div>
+  </div>
+  <!--container header ends here--> 
+</div>
+	 
+	 
+      <div class="wrapper">
+	  <p> </p>
+	  
+         <h3>Group No. 7 </h3>
+         <h2>Smart Waste Management using IOT</h2>
+			
+         <form id="connection-information-form">
+            <b>Host:</b> 
+            <input id="host" type="text" name="host" value="test.mosquitto.org"><br>
+            <b>Port No.:</b>
+            <input id="port" type="text" name="port" value="8080"><br>
+            <b>Topic  :</b>
+            <input id="topic" type="text" name="topic" value="Litesh"><br>
+            <input type="button" onclick="startConnect()" value="Connect">
+            <input type="button" onclick="startDisconnect()" value="Disconnect">
+         </form>
+         <div id="messages">
+         </div>
+      </div>
+        
+        
+
+<!--The div element for the map -->
+    <div id="map"></div>        <div id="karvenagar_data"></div>  <div id="bavdhan_data"></div>  <div id="kothrud_data"></div>
+
+   </body>
+</html>
